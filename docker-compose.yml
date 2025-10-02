@@ -14,7 +14,7 @@ services:
       - DB_CONNECTION=Server=article-db-global;Database=Articles;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True
 
     ports:
-      - "8080:8080"   # fix port mapping (app listens on 8080 inside container)
+      - "8080:8080"   
 
   # Global + 7 continent DBs
   article-db-global:
@@ -113,3 +113,35 @@ services:
     environment:
       SA_PASSWORD: "Your_password123"
       ACCEPT_EULA: "Y"
+  # ----------------------
+  # Draft Service + DB
+  # ----------------------
+  draft-service:
+    image: draft-service:latest
+    environment:
+      - DB_CONNECTION=Server=draft-db;Database=Drafts;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True
+      - SEQ_URL=http://seq:5341
+    ports:
+      - "8083:8080"
+    depends_on:
+      - draft-db
+      - seq
+
+  draft-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: "Your_password123"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1434:1433"   # avoid clashing with the global DB
+
+  # ----------------------
+  # Centralized logging (Seq)
+  # ----------------------
+  seq:
+    image: datalust/seq:2024.1
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - "8085:80"     # Seq UI
+      - "5341:5341"   # ingestion API
