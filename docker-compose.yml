@@ -1,9 +1,11 @@
 version: "3.8"
 
 services:
+  # ----------------------
+  # Article Service + DBs
+  # ----------------------
   article-service:
     image: article-service:latest
-    build: .
     deploy:
       replicas: 3  # X-axis split
       restart_policy:
@@ -11,15 +13,16 @@ services:
     environment:
       - DB_CONNECTION=Server=article-db-global;Database=Articles;User=sa;Password=Your_password123;
     ports:
-      - "8080:80"
+      - "8080:8080"   # fix port mapping (app listens on 8080 inside container)
 
-  # 8 Databases for Z-axis split
+  # Global + 7 continent DBs
   article-db-global:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       SA_PASSWORD: "Your_password123"
       ACCEPT_EULA: "Y"
-    ports: ["1433:1433"]
+    ports:
+      - "1433:1433"
 
   article-db-europe:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -38,24 +41,74 @@ services:
     environment:
       SA_PASSWORD: "Your_password123"
       ACCEPT_EULA: "Y"
+
   article-db-north-america:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       SA_PASSWORD: "Your_password123"
       ACCEPT_EULA: "Y"
+
   article-db-south-america:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       SA_PASSWORD: "Your_password123"
       ACCEPT_EULA: "Y"
+
   article-db-oceania:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       SA_PASSWORD: "Your_password123"
       ACCEPT_EULA: "Y"
+
   article-db-antarctica:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       SA_PASSWORD: "Your_password123"
       ACCEPT_EULA: "Y"
 
+  # ----------------------
+  # Comment Service + DB
+  # ----------------------
+  comment-service:
+    image: comment-service:latest
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    environment:
+      - DB_CONNECTION=Server=comment-db;Database=Comments;User=sa;Password=Your_password123;
+      - PROFANITY_URL=http://profanity-service:8080
+      - FALLBACK_PROFANITY_WORDS=bad,ugly,stupid
+    ports:
+      - "8081:8080"
+    depends_on:
+      - comment-db
+      - profanity-service
+
+  comment-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: "Your_password123"
+      ACCEPT_EULA: "Y"
+
+  # ----------------------
+  # Profanity Service + DB
+  # ----------------------
+  profanity-service:
+    image: profanity-service:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    environment:
+      - DB_CONNECTION=Server=profanity-db;Database=Profanity;User=sa;Password=Your_password123;
+    ports:
+      - "8082:8080"
+    depends_on:
+      - profanity-db
+
+  profanity-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: "Your_password123"
+      ACCEPT_EULA: "Y"
