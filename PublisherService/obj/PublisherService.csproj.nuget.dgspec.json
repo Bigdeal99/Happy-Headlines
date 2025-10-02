@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\marce\\Documents\\GitHub\\Happy-Headlines\\ArticleService\\ArticleService.csproj": {}
+    "C:\\Users\\marce\\Documents\\GitHub\\Happy-Headlines\\PublisherService\\PublisherService.csproj": {}
   },
   "projects": {
-    "C:\\Users\\marce\\Documents\\GitHub\\Happy-Headlines\\ArticleService\\ArticleService.csproj": {
+    "C:\\Users\\marce\\Documents\\GitHub\\Happy-Headlines\\PublisherService\\PublisherService.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\marce\\Documents\\GitHub\\Happy-Headlines\\ArticleService\\ArticleService.csproj",
-        "projectName": "ArticleService",
-        "projectPath": "C:\\Users\\marce\\Documents\\GitHub\\Happy-Headlines\\ArticleService\\ArticleService.csproj",
+        "projectUniqueName": "C:\\Users\\marce\\Documents\\GitHub\\Happy-Headlines\\PublisherService\\PublisherService.csproj",
+        "projectName": "PublisherService",
+        "projectPath": "C:\\Users\\marce\\Documents\\GitHub\\Happy-Headlines\\PublisherService\\PublisherService.csproj",
         "packagesPath": "C:\\Users\\marce\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\marce\\Documents\\GitHub\\Happy-Headlines\\ArticleService\\obj\\",
+        "outputPath": "C:\\Users\\marce\\Documents\\GitHub\\Happy-Headlines\\PublisherService\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\marce\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -48,35 +48,25 @@
               "target": "Package",
               "version": "[8.0.6, )"
             },
-            "Microsoft.EntityFrameworkCore": {
-              "target": "Package",
-              "version": "[9.0.9, )"
-            },
-            "Microsoft.EntityFrameworkCore.SqlServer": {
-              "target": "Package",
-              "version": "[9.0.9, )"
-            },
-            "Microsoft.EntityFrameworkCore.Tools": {
-              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[9.0.9, )"
-            },
             "OpenTelemetry.Exporter.Jaeger": {
               "target": "Package",
-              "version": "[1.5.1, )"
+              "version": "[1.6.0-rc.1, )"
             },
             "OpenTelemetry.Extensions.Hosting": {
               "target": "Package",
-              "version": "[1.13.0, )"
+              "version": "[1.7.0, )"
             },
             "OpenTelemetry.Instrumentation.AspNetCore": {
               "target": "Package",
-              "version": "[1.12.0, )"
+              "version": "[1.7.0, )"
             },
             "OpenTelemetry.Instrumentation.Http": {
               "target": "Package",
-              "version": "[1.12.0, )"
+              "version": "[1.7.0, )"
+            },
+            "OpenTelemetry.Instrumentation.SqlClient": {
+              "target": "Package",
+              "version": "[1.8.0-beta.1, )"
             },
             "RabbitMQ.Client": {
               "target": "Package",
@@ -84,7 +74,11 @@
             },
             "Serilog.AspNetCore": {
               "target": "Package",
-              "version": "[9.0.0, )"
+              "version": "[8.0.1, )"
+            },
+            "Serilog.Sinks.Console": {
+              "target": "Package",
+              "version": "[6.0.0, )"
             },
             "Serilog.Sinks.Seq": {
               "target": "Package",

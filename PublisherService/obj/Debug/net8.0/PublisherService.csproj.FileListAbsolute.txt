@@ -1,0 +1,9 @@
+C:\Users\marce\Documents\GitHub\Happy-Headlines\PublisherService\obj\Debug\net8.0\PublisherService.csproj.AssemblyReference.cache
+C:\Users\marce\Documents\GitHub\Happy-Headlines\PublisherService\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\marce\Documents\GitHub\Happy-Headlines\PublisherService\obj\Debug\net8.0\PublisherService.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\marce\Documents\GitHub\Happy-Headlines\PublisherService\obj\Debug\net8.0\PublisherService.AssemblyInfoInputs.cache
+C:\Users\marce\Documents\GitHub\Happy-Headlines\PublisherService\obj\Debug\net8.0\PublisherService.AssemblyInfo.cs
+C:\Users\marce\Documents\GitHub\Happy-Headlines\PublisherService\obj\Debug\net8.0\PublisherService.csproj.CoreCompileInputs.cache
+C:\Users\marce\Documents\GitHub\Happy-Headlines\PublisherService\obj\Debug\net8.0\PublisherService.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\marce\Documents\GitHub\Happy-Headlines\PublisherService\obj\Debug\net8.0\PublisherService.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\marce\Documents\GitHub\Happy-Headlines\PublisherService\obj\Debug\net8.0\PublisherService.sourcelink.json
