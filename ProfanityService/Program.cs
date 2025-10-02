@@ -5,27 +5,48 @@ using ProfanityService.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 var conn = Environment.GetEnvironmentVariable("DB_CONNECTION")
-          ?? builder.Configuration.GetConnectionString("DefaultConnection")
-          ?? "Server=profanity-db;Database=Profanity;User=sa;Password=Your_password123;";
+          ?? "Server=profanity-db;Database=Profanity;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True;";
+
 
 builder.Services.AddDbContext<ProfanityDbContext>(opt => opt.UseSqlServer(conn));
 builder.Services.AddControllers();
 
 var app = builder.Build();
 
-// Ensure DB + seed a few words
+// ✅ Retry until DB is ready
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ProfanityDbContext>();
-    db.Database.EnsureCreated();
-    if (!db.Words.Any())
+    var retries = 0;
+    var connected = false;
+
+    while (!connected && retries < 10)
     {
-        db.Words.AddRange(
-            new ProfanityWord { Word = "bad" },
-            new ProfanityWord { Word = "ugly" },
-            new ProfanityWord { Word = "stupid" }
-        );
-        db.SaveChanges();
+        try
+        {
+            db.Database.EnsureCreated();
+            if (!db.Words.Any())
+            {
+                db.Words.AddRange(
+                    new ProfanityWord { Word = "bad" },
+                    new ProfanityWord { Word = "ugly" },
+                    new ProfanityWord { Word = "stupid" }
+                );
+                db.SaveChanges();
+            }
+            connected = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ Database not ready yet: {ex.Message}");
+            Thread.Sleep(5000); // wait 5 seconds before retry
+            retries++;
+        }
+    }
+
+    if (!connected)
+    {
+        throw new Exception("❌ Could not connect to database after retries.");
     }
 }
 
