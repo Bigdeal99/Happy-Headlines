@@ -12,7 +12,6 @@ services:
         condition: on-failure
     environment:
       - DB_CONNECTION=Server=article-db-global;Database=Articles;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True
-
     ports:
       - "8080:8080"   
 
@@ -186,3 +185,7 @@ services:
     depends_on:
       - article-service
       - jaeger
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"

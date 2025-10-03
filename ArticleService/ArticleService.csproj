@@ -22,9 +22,11 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.8.1" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.8.1" />
     <PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.0.0-rc9" />
+    <PackageReference Include="prometheus-net.AspNetCore" Version="8.0.1" />
     
     <!-- RabbitMQ (working version for IModel, CreateConnection, etc.) -->
     <PackageReference Include="RabbitMQ.Client" Version="6.6.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.7.33" />
   </ItemGroup>
 
 </Project>

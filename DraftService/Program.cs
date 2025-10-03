@@ -21,7 +21,11 @@ try
               ?? "Server=draft-db;Database=Drafts;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True;";
 
     builder.Services.AddDbContext<DraftDbContext>(opt =>
-        opt.UseSqlServer(conn, sql => sql.EnableRetryOnFailure()));
+    opt.UseSqlServer(conn, sql => sql.EnableRetryOnFailure(
+        maxRetryCount: 5,
+        maxRetryDelay: TimeSpan.FromSeconds(5),
+        errorNumbersToAdd: null
+    )));
 
     builder.Services.AddControllers();
 

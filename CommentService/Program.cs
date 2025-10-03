@@ -3,14 +3,17 @@ using CommentService.Services;
 using Microsoft.EntityFrameworkCore;
 using Polly;
 using Polly.Extensions.Http;
+using Prometheus;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var conn = Environment.GetEnvironmentVariable("DB_CONNECTION")
           ?? "Server=comment-db;Database=Comments;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True;";
 
+builder.Services.AddDbContext<CommentDbContext>(opt =>
+    opt.UseSqlServer(conn, sql => sql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(2), null)));
 
-builder.Services.AddDbContext<CommentDbContext>(opt => opt.UseSqlServer(conn));
 builder.Services.AddControllers();
 
 // ---------- Profanity HttpClient with Circuit Breaker ----------
@@ -33,6 +36,10 @@ builder.Services.AddHttpClient<IProfanityClient, ProfanityClient>(c =>
 .AddPolicyHandler(retry)
 .AddPolicyHandler(breaker);
 
+// ---------- Redis ----------
+var redisConn = Environment.GetEnvironmentVariable("REDIS_CONNECTION") ?? "redis:6379";
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConn));
+
 var app = builder.Build();
 
 // ✅ Retry until DB is ready
@@ -52,7 +59,7 @@ using (var scope = app.Services.CreateScope())
         catch (Exception ex)
         {
             Console.WriteLine($"⚠️ Comment DB not ready yet: {ex.Message}");
-            Thread.Sleep(5000); // wait 5 seconds
+            Thread.Sleep(5000);
             retries++;
         }
     }
@@ -62,6 +69,10 @@ using (var scope = app.Services.CreateScope())
         throw new Exception("❌ Could not connect to Comment DB after retries.");
     }
 }
+
+// Prometheus metrics endpoint
+app.UseHttpMetrics();
+app.MapMetrics("/metrics");
 
 app.MapControllers();
 app.Run();
