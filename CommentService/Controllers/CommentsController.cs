@@ -20,18 +20,22 @@ namespace CommentService.Controllers
         private const string LruKey = "comments:lru";
         private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
 
-        private static readonly Counter CacheHit  = Metrics.CreateCounter("comment_cache_hit",  "Comment cache hits");
-        private static readonly Counter CacheMiss = Metrics.CreateCounter("comment_cache_miss", "Comment cache misses");
+        private static readonly Counter CacheHit  = AppMetrics.CommentCacheHit;
+        private static readonly Counter CacheMiss = AppMetrics.CommentCacheMiss;
+        private static readonly Counter Requests  = AppMetrics.RequestsTotal;
 
-        public CommentsController(CommentDbContext db, IProfanityClient profanity, IConnectionMultiplexer mux)
+        private readonly ILogger<CommentsController> _logger;
+
+        public CommentsController(CommentDbContext db, IProfanityClient profanity, IConnectionMultiplexer mux, ILogger<CommentsController> logger)
         {
-            _db = db; _profanity = profanity; _redis = mux.GetDatabase();
+            _db = db; _profanity = profanity; _redis = mux.GetDatabase(); _logger = logger;
         }
 
         // POST /api/comments
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Comment comment, CancellationToken ct)
         {
+            Requests.Inc(); _logger.LogInformation("[Metrics] Comment POST -> hh_requests_comment_total++");
             if (string.IsNullOrWhiteSpace(comment.Text)) return BadRequest("Text is required.");
 
             var hasProfanity = await _profanity.ContainsProfanity(comment.Text, ct);
@@ -49,6 +53,7 @@ namespace CommentService.Controllers
         [HttpGet("{articleId:int}")]
         public async Task<IActionResult> GetForArticle(int articleId, CancellationToken ct)
         {
+            Requests.Inc(); _logger.LogInformation("[Metrics] Comment GET -> hh_requests_comment_total++");
             var key = Key(articleId);
 
             var cached = await _redis.StringGetAsync(key);
@@ -85,13 +90,17 @@ namespace CommentService.Controllers
         private async Task TrimLruAsync()
         {
             var count = await _redis.SortedSetLengthAsync(LruKey);
-            while (count > 30)
+            if (count <= 30) return;
+
+            var toRemove = (long)(count - 30);
+            // get oldest ranks
+            var olders = await _redis.SortedSetRangeByRankAsync(LruKey, 0, toRemove - 1, Order.Ascending);
+            foreach (var member in olders)
             {
-                var popped = await _redis.SortedSetPopAsync(LruKey, Order.Ascending);
-                if (popped.Element.HasValue)
-                    await _redis.KeyDeleteAsync($"comments:{popped.Element}");
-                count = await _redis.SortedSetLengthAsync(LruKey);
+                if (member.HasValue)
+                    await _redis.KeyDeleteAsync($"comments:{member.ToString()}");
             }
+            await _redis.SortedSetRemoveRangeByRankAsync(LruKey, 0, toRemove - 1);
         }
     }
 }

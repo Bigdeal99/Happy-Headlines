@@ -1,0 +1,76 @@
+{
+  "annotations": {"list": []},
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Article Cache Hit Ratio",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "orientation": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(article_cache_hit_total[5m])) / (sum(rate(article_cache_hit_total[5m])) + sum(rate(article_cache_miss_total[5m])))",
+          "legendFormat": "ratio",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Comment Cache Hit Ratio",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "orientation": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(comment_cache_hit_total[5m])) / (sum(rate(comment_cache_hit_total[5m])) + sum(rate(comment_cache_miss_total[5m])))",
+          "legendFormat": "ratio",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Article Cache Hits/Misses",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [
+        {"expr": "sum(rate(article_cache_hit_total[1m]))", "legendFormat": "hits", "refId": "A"},
+        {"expr": "sum(rate(article_cache_miss_total[1m]))", "legendFormat": "misses", "refId": "B"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Comment Cache Hits/Misses",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [
+        {"expr": "sum(rate(comment_cache_hit_total[1m]))", "legendFormat": "hits", "refId": "A"},
+        {"expr": "sum(rate(comment_cache_miss_total[1m]))", "legendFormat": "misses", "refId": "B"}
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["cache"],
+  "templating": {"list": []},
+  "time": {"from": "now-6h", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "Cache Overview",
+  "version": 1
+}
+

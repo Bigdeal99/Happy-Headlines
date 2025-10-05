@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: 'Cache Dashboards'
+    folder: ''
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 10
+    options:
+      path: /etc/grafana/provisioning/dashboards
+

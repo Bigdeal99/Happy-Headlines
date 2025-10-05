@@ -5,6 +5,7 @@ using ArticleService.Models;
 using StackExchange.Redis;
 using System.Text.Json;
 using Prometheus;
+using ArticleService.Services;
 
 namespace ArticleService.Controllers
 {
@@ -15,16 +16,20 @@ namespace ArticleService.Controllers
         private readonly ArticleDbContext _context;
         private readonly IDatabase _redis;
 
-        // Prometheus counters
-        private static readonly Counter CacheHit  = Metrics.CreateCounter("article_cache_hit",  "Article cache hits");
-        private static readonly Counter CacheMiss = Metrics.CreateCounter("article_cache_miss", "Article cache misses");
+        // Shared counters from custom registry
+        private static readonly Counter CacheHit  = AppMetrics.ArticleCacheHit;
+        private static readonly Counter CacheMiss = AppMetrics.ArticleCacheMiss;
+        private static readonly Counter Requests  = AppMetrics.RequestsTotal;
 
         private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
 
-        public ArticlesController(ArticleDbContext context, IConnectionMultiplexer mux)
+        private readonly ILogger<ArticlesController> _logger;
+
+        public ArticlesController(ArticleDbContext context, IConnectionMultiplexer mux, ILogger<ArticlesController> logger)
         {
             _context = context;
             _redis = mux.GetDatabase();
+            _logger = logger;
         }
 
         private static string Key(int id) => $"article:{id}";
@@ -33,6 +38,7 @@ namespace ArticleService.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] Article article)
         {
+            Requests.Inc(); _logger.LogInformation("[Metrics] Create -> hh_requests_total++");
             _context.Articles.Add(article);
             await _context.SaveChangesAsync();
 
@@ -47,6 +53,7 @@ namespace ArticleService.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
+            Requests.Inc(); _logger.LogInformation("[Metrics] Get -> hh_requests_total++");
             var key = Key(id);
 
             var cached = await _redis.StringGetAsync(key);
@@ -69,6 +76,7 @@ namespace ArticleService.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] Article article)
         {
+            Requests.Inc(); _logger.LogInformation("[Metrics] Update -> hh_requests_total++");
             if (id != article.Id) return BadRequest();
             _context.Entry(article).State = EntityState.Modified;
             await _context.SaveChangesAsync();
@@ -82,6 +90,7 @@ namespace ArticleService.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            Requests.Inc(); _logger.LogInformation("[Metrics] Delete -> hh_requests_total++");
             var article = await _context.Articles.FindAsync(id);
             if (article == null) return NotFound();
 

@@ -4,11 +4,16 @@ using ProfanityService.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ✅ Logging: use built-in, no CreateLogger()
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 var conn = Environment.GetEnvironmentVariable("DB_CONNECTION")
           ?? "Server=profanity-db;Database=Profanity;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True;";
 
+builder.Services.AddDbContext<ProfanityDbContext>(opt =>
+    opt.UseSqlServer(conn, sql => sql.EnableRetryOnFailure()));
 
-builder.Services.AddDbContext<ProfanityDbContext>(opt => opt.UseSqlServer(conn));
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -39,7 +44,7 @@ using (var scope = app.Services.CreateScope())
         catch (Exception ex)
         {
             Console.WriteLine($"⚠️ Database not ready yet: {ex.Message}");
-            Thread.Sleep(5000); // wait 5 seconds before retry
+            Thread.Sleep(5000);
             retries++;
         }
     }

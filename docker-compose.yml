@@ -1,29 +1,33 @@
-version: "3.8"
-
 services:
   # ----------------------
   # Article Service + DBs
   # ----------------------
   article-service:
+    build: ./ArticleService   # 👈 added build
     image: article-service:latest
     deploy:
-      replicas: 3  # X-axis split
+      replicas: 1
       restart_policy:
         condition: on-failure
     environment:
       - DB_CONNECTION=Server=article-db-global;Database=Articles;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True
+      - REDIS_CONNECTION=redis:6379
+      - OTLP_ENDPOINT=http://jaeger:4317
+      - ASPNETCORE_URLS=http://0.0.0.0:8080
+      - ENABLE_QUEUE=false
     ports:
-      - "8080:8080"   
+      - "8080:8080"
+    depends_on:
+      - article-db-global
+      - redis
 
-  # Global + 7 continent DBs
   article-db-global:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       SA_PASSWORD: "Your_password123"
       ACCEPT_EULA: "Y"
-    ports:
-      - "1433:1433"
 
+  # Continent DBs (no ports to avoid conflicts)
   article-db-europe:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
@@ -70,36 +74,42 @@ services:
   # Comment Service + DB
   # ----------------------
   comment-service:
+    build: ./CommentService   # 👈 added build
     image: comment-service:latest
     deploy:
-      replicas: 2
+      replicas: 1
       restart_policy:
         condition: on-failure
     environment:
       - DB_CONNECTION=Server=comment-db;Database=Comments;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True
       - PROFANITY_URL=http://profanity-service:8080
-      - FALLBACK_PROFANITY_WORDS=bad,ugly,stupid
+      - REDIS_CONNECTION=redis:6379
+      - OTLP_ENDPOINT=http://jaeger:4317
+      - ASPNETCORE_URLS=http://0.0.0.0:8080
     ports:
       - "8081:8080"
     depends_on:
       - comment-db
       - profanity-service
+      - redis
 
   comment-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       SA_PASSWORD: "Your_password123"
       ACCEPT_EULA: "Y"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Your_password123' -Q 'SELECT 1' -b || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   # ----------------------
   # Profanity Service + DB
   # ----------------------
   profanity-service:
+    build: ./ProfanityService   # 👈 added build
     image: profanity-service:latest
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
     environment:
       - DB_CONNECTION=Server=profanity-db;Database=Profanity;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True
     ports:
@@ -112,10 +122,12 @@ services:
     environment:
       SA_PASSWORD: "Your_password123"
       ACCEPT_EULA: "Y"
+
   # ----------------------
   # Draft Service + DB
   # ----------------------
   draft-service:
+    build: ./DraftService   # 👈 added build
     image: draft-service:latest
     environment:
       - DB_CONNECTION=Server=draft-db;Database=Drafts;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True
@@ -132,7 +144,7 @@ services:
       SA_PASSWORD: "Your_password123"
       ACCEPT_EULA: "Y"
     ports:
-      - "1434:1433"   # avoid clashing with the global DB
+      - "1434:1433"
 
   # ----------------------
   # Centralized logging (Seq)
@@ -142,27 +154,53 @@ services:
     environment:
       - ACCEPT_EULA=Y
     ports:
-      - "8085:80"     # Seq UI
-      - "5341:5341"   # ingestion API
+      - "8085:80"
+      - "5341:5341"
+
   # ----------------------
   # Messaging + Tracing
   # ----------------------
   rabbitmq:
     image: rabbitmq:3-management
     ports:
-      - "5672:5672"     # AMQP
-      - "15672:15672"   # RabbitMQ UI http://localhost:15672 (guest/guest)
+      - "5672:5672"
+      - "15672:15672"
 
   jaeger:
     image: jaegertracing/all-in-one:1.57
     environment:
-      - COLLECTOR_OTLP_ENABLED=true  # enable OTLP receiver on 4317
+      - COLLECTOR_OTLP_ENABLED=true
     ports:
-      - "16686:16686"   # Jaeger UI http://localhost:16686
-      - "4317:4317"     # OTLP (gRPC) endpoint for OpenTelemetry exporters
+      - "16686:16686"
+      - "4317:4317"
+
+  # ----------------------
+  # Monitoring: Prometheus + Grafana
+  # ----------------------
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
   publisher-service:
-    image: publisher-service:latest
     build: ./PublisherService
+    image: publisher-service:latest
     environment:
       - PROFANITY_URL=http://profanity-service:8080
       - RABBIT_HOST=rabbitmq
@@ -175,8 +213,8 @@ services:
       - jaeger
 
   newsletter-service:
-    image: newsletter-service:latest
     build: ./NewsletterService
+    image: newsletter-service:latest
     environment:
       - ARTICLE_URL=http://article-service:8080
       - OTLP_ENDPOINT=http://jaeger:4317
@@ -185,6 +223,10 @@ services:
     depends_on:
       - article-service
       - jaeger
+
+  # ----------------------
+  # Redis (for caching)
+  # ----------------------
   redis:
     image: redis:7
     ports:

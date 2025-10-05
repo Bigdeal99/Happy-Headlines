@@ -5,17 +5,23 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Prometheus;
 using StackExchange.Redis;
+using Microsoft.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ----------------- DB -----------------
-var connectionString =
-    Environment.GetEnvironmentVariable("DB_CONNECTION")
-    ?? "Server=article-db-global;Database=Articles;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True;MultipleActiveResultSets=true;";
+var conn = Environment.GetEnvironmentVariable("DB_CONNECTION")
+          ?? "Server=article-db-global;Database=Articles;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True;";
+
+// Ensure DB exists before EF tries to connect
+using (var tempLoggerFactory = LoggerFactory.Create(b => b.AddConsole()))
+{
+    var startupLogger = tempLoggerFactory.CreateLogger("ArticleServiceStartup");
+    await EnsureSqlServerDatabaseAsync(conn, startupLogger);
+}
 
 builder.Services.AddDbContext<ArticleDbContext>(opt =>
-    opt.UseSqlServer(connectionString,
-        sql => sql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(2), null)));
+    opt.UseSqlServer(conn, sql => sql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(2), null)));
 
 // ----------------- Redis -----------------
 var redisConn = Environment.GetEnvironmentVariable("REDIS_CONNECTION") ?? "redis:6379";
@@ -25,8 +31,11 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer
 builder.Services.AddControllers();
 
 // ----------------- Background workers -----------------
-builder.Services.AddHostedService<ArticleQueueConsumer>();   // keep RabbitMQ consumer
-builder.Services.AddHostedService<ArticleCachePrefillWorker>(); // Redis prefill
+// Disable queue consumer when RabbitMQ is unavailable (avoid crashing dev metrics)
+var enableQueue = Environment.GetEnvironmentVariable("ENABLE_QUEUE")?.ToLowerInvariant() != "false";
+if (enableQueue)
+    builder.Services.AddHostedService<ArticleQueueConsumer>();
+builder.Services.AddHostedService<ArticleCachePrefillWorker>();
 
 // ----------------- OpenTelemetry -----------------
 builder.Services.AddOpenTelemetry()
@@ -42,11 +51,11 @@ builder.Services.AddOpenTelemetry()
 
 var app = builder.Build();
 
-// Prometheus metrics
+// Prometheus metrics - expose shared registry
 app.UseHttpMetrics();
-app.MapMetrics("/metrics");
+app.UseMetricServer("/metrics", registry: AppMetrics.Registry);
 
-// Ensure DB exists (with retries)
+// Ensure DB tables exist (retry loop)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ArticleDbContext>();
@@ -59,3 +68,27 @@ using (var scope = app.Services.CreateScope())
 
 app.MapControllers();
 app.Run();
+
+
+// ------------- Helper -------------
+static async Task EnsureSqlServerDatabaseAsync(string connectionString, ILogger logger)
+{
+    var builder = new SqlConnectionStringBuilder(connectionString);
+    var databaseName = builder.InitialCatalog;
+
+    // Connect to master DB
+    builder.InitialCatalog = "master";
+
+    using var connection = new SqlConnection(builder.ConnectionString);
+    await connection.OpenAsync();
+
+    using var cmd = connection.CreateCommand();
+    cmd.CommandText = $@"
+        IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'{databaseName}')
+        BEGIN
+            CREATE DATABASE [{databaseName}];
+        END";
+    await cmd.ExecuteNonQueryAsync();
+
+    logger.LogInformation("✅ Ensured database {Database} exists", databaseName);
+}
