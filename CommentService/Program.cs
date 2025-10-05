@@ -3,6 +3,10 @@ using CommentService.Services;
 using Microsoft.EntityFrameworkCore;
 using Polly;
 using Polly.Extensions.Http;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Prometheus;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +36,25 @@ builder.Services.AddHttpClient<IProfanityClient, ProfanityClient>(c =>
 })
 .AddPolicyHandler(retry)
 .AddPolicyHandler(breaker);
+
+// ---------- OpenTelemetry Tracing ----------
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService("CommentService"))
+    .WithTracing(t => t
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddOtlpExporter(o =>
+        {
+            o.Endpoint = new Uri(Environment.GetEnvironmentVariable("OTLP_ENDPOINT") ?? "http://jaeger:4317");
+        }));
+
+// ---------- Redis + Metrics ----------
+var redisConn = Environment.GetEnvironmentVariable("REDIS_CONNECTION") ?? "redis:6379";
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConn));
+var commentCacheHits = Metrics.CreateCounter("comment_cache_hits_total", "Comment cache hits");
+var commentCacheMisses = Metrics.CreateCounter("comment_cache_misses_total", "Comment cache misses");
+builder.Services.AddSingleton(commentCacheHits);
+builder.Services.AddSingleton(commentCacheMisses);
 
 var app = builder.Build();
 
@@ -64,4 +87,5 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.MapControllers();
+app.MapMetrics();
 app.Run();

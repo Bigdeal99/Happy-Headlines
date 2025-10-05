@@ -25,6 +25,10 @@
     
     <!-- RabbitMQ (working version for IModel, CreateConnection, etc.) -->
     <PackageReference Include="RabbitMQ.Client" Version="6.6.0" />
+
+    <!-- Caching + Metrics -->
+    <PackageReference Include="StackExchange.Redis" Version="2.7.33" />
+    <PackageReference Include="prometheus-net.AspNetCore" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

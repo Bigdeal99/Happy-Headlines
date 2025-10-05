@@ -3,6 +3,8 @@ using ArticleService.Services;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Prometheus;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +26,17 @@ builder.Services.AddControllers();
 // RabbitMQ Consumer
 // -----------------
 builder.Services.AddHostedService<ArticleQueueConsumer>();
+builder.Services.AddHostedService<ArticleCacheWarmer>();
+
+// -----------------
+// Redis cache + metrics
+// -----------------
+var redisConn = Environment.GetEnvironmentVariable("REDIS_CONNECTION") ?? "redis:6379";
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConn));
+var articleCacheHits = Metrics.CreateCounter("article_cache_hits_total", "Article cache hits");
+var articleCacheMisses = Metrics.CreateCounter("article_cache_misses_total", "Article cache misses");
+builder.Services.AddSingleton(articleCacheHits);
+builder.Services.AddSingleton(articleCacheMisses);
 
 // -----------------
 // OpenTelemetry
@@ -77,5 +90,6 @@ using (var scope = app.Services.CreateScope())
 // Map API Controllers
 // -----------------
 app.MapControllers();
+app.MapMetrics();
 
 app.Run();

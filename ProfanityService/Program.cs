@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using ProfanityService.Data;
 using ProfanityService.Models;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +12,16 @@ var conn = Environment.GetEnvironmentVariable("DB_CONNECTION")
 
 builder.Services.AddDbContext<ProfanityDbContext>(opt => opt.UseSqlServer(conn));
 builder.Services.AddControllers();
+
+// OpenTelemetry Tracing
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService("ProfanityService"))
+    .WithTracing(t => t
+        .AddAspNetCoreInstrumentation()
+        .AddOtlpExporter(o =>
+        {
+            o.Endpoint = new Uri(Environment.GetEnvironmentVariable("OTLP_ENDPOINT") ?? "http://jaeger:4317");
+        }));
 
 var app = builder.Build();
 

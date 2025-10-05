@@ -1,0 +1,46 @@
+@startuml C4Level1
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Happy Headlines - C4 Model Level 1 (System Context)
+
+Person(publisher, "Publisher", "Creates and publishes articles")
+
+System_Boundary(hh, "Happy Headlines") {
+  System(webapp, "Webapp", "UI for publishers")
+  System(publisher_svc, "PublisherService", "Publishes articles; produces messages")
+  System(article_svc, "ArticleService", "Persists published articles")
+  System(comment_svc, "CommentService", "Manages comments; checks profanity")
+  System(profanity_svc, "ProfanityService", "Stores profanity words and checks text")
+  System(newsletter_svc, "NewsletterService", "Sends newsletters")
+  SystemDb(article_db, "ArticleDatabase", "Stores articles")
+  SystemQueue(article_queue, "ArticleQueue", "RabbitMQ queue for published articles")
+
+  System_Ext(seq, "Seq", "Centralized logs")
+  System_Ext(jaeger, "Jaeger", "Central trace storage via OTLP 4317")
+}
+
+Rel(publisher, webapp, "Publishes an article")
+Rel(webapp, publisher_svc, "HTTP", "W3C tracecontext propagated")
+Rel(publisher_svc, profanity_svc, "HTTP: profanity check", "HttpClient instrumentation")
+Rel(publisher_svc, article_queue, "AMQP publish", "W3C context injected into headers")
+Rel(article_queue, article_svc, "AMQP consume", "Context extracted; spans linked")
+Rel(article_svc, article_db, "SQL")
+Rel(newsletter_svc, article_svc, "HTTP: fetch latest", "HttpClient instrumentation")
+
+Rel(publisher_svc, jaeger, "OTLP gRPC 4317", "Traces")
+Rel(article_svc, jaeger, "OTLP gRPC 4317", "Traces")
+Rel(comment_svc, jaeger, "OTLP gRPC 4317", "Traces")
+Rel(profanity_svc, jaeger, "OTLP gRPC 4317", "Traces")
+Rel(newsletter_svc, jaeger, "OTLP gRPC 4317", "Traces")
+Rel(draft_service, jaeger, "OTLP gRPC 4317", "Traces")
+
+Rel(publisher_svc, seq, "Serilog sink", "Logs")
+Rel(draft_service, seq, "Serilog sink", "Logs")
+
+' define draft service placeholder
+System(draft_service, "DraftService", "Creates and edits drafts")
+
+SHOW_LEGEND(true)
+@enduml
+
+

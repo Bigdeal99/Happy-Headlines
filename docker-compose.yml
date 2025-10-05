@@ -12,6 +12,8 @@ services:
         condition: on-failure
     environment:
       - DB_CONNECTION=Server=article-db-global;Database=Articles;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True
+      - OTLP_ENDPOINT=http://jaeger:4317
+      - REDIS_CONNECTION=redis:6379
 
     ports:
       - "8080:8080"   
@@ -80,6 +82,8 @@ services:
       - DB_CONNECTION=Server=comment-db;Database=Comments;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True
       - PROFANITY_URL=http://profanity-service:8080
       - FALLBACK_PROFANITY_WORDS=bad,ugly,stupid
+      - OTLP_ENDPOINT=http://jaeger:4317
+      - REDIS_CONNECTION=redis:6379
     ports:
       - "8081:8080"
     depends_on:
@@ -103,6 +107,7 @@ services:
         condition: on-failure
     environment:
       - DB_CONNECTION=Server=profanity-db;Database=Profanity;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True
+      - OTLP_ENDPOINT=http://jaeger:4317
     ports:
       - "8082:8080"
     depends_on:
@@ -121,6 +126,7 @@ services:
     environment:
       - DB_CONNECTION=Server=draft-db;Database=Drafts;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True
       - SEQ_URL=http://seq:5341
+      - OTLP_ENDPOINT=http://jaeger:4317
     ports:
       - "8083:8080"
     depends_on:
@@ -148,6 +154,22 @@ services:
   # ----------------------
   # Messaging + Tracing
   # ----------------------
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    volumes:
+      - ./docs/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+  grafana:
+    image: grafana/grafana:11.2.0
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
   rabbitmq:
     image: rabbitmq:3-management
     ports:
@@ -181,8 +203,9 @@ services:
     environment:
       - ARTICLE_URL=http://article-service:8080
       - OTLP_ENDPOINT=http://jaeger:4317
-    ports:
-      - "8086:8080"
     depends_on:
       - article-service
       - jaeger
+      - redis
+    ports:
+      - "8086:8080"

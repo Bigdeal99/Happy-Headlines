@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ArticleService.Data;
 using ArticleService.Models;
+using StackExchange.Redis;
+using Prometheus;
 
 namespace ArticleService.Controllers
 {
@@ -10,7 +12,41 @@ namespace ArticleService.Controllers
     public class ArticlesController : ControllerBase
     {
         private readonly ArticleDbContext _context;
-        public ArticlesController(ArticleDbContext context) => _context = context;
+        private readonly IDatabase _cache;
+        private readonly Counter _hits;
+        private readonly Counter _misses;
+        public ArticlesController(ArticleDbContext context, IConnectionMultiplexer redis, Counter articleCacheHits, Counter articleCacheMisses)
+        {
+            _context = context;
+            _cache = redis.GetDatabase();
+            _hits = articleCacheHits;
+            _misses = articleCacheMisses;
+        }
+
+        // LIST (for NewsletterService): /api/articles?top=5
+        [HttpGet]
+        public async Task<IActionResult> List([FromQuery] int top = 5)
+        {
+            top = Math.Clamp(top, 1, 100);
+            var cacheKey = $"articles:latest:{top}";
+            var cached = await _cache.StringGetAsync(cacheKey);
+            if (cached.HasValue)
+            {
+                _hits.Inc();
+                return Content(cached!, "application/json");
+            }
+
+            var items = await _context.Articles
+                    .OrderByDescending(a => a.PublishedAt)
+                    .Take(top)
+                    .Select(a => new { a.Id, a.Title, a.PublishedAt })
+                    .ToListAsync();
+
+            _misses.Inc();
+            var json = System.Text.Json.JsonSerializer.Serialize(items);
+            await _cache.StringSetAsync(cacheKey, json, TimeSpan.FromMinutes(5));
+            return Content(json, "application/json");
+        }
 
         // CREATE
         [HttpPost]

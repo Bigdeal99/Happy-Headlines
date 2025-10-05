@@ -89,6 +89,14 @@
             "RabbitMQ.Client": {
               "target": "Package",
               "version": "[6.6.0, )"
+            },
+            "StackExchange.Redis": {
+              "target": "Package",
+              "version": "[2.7.33, )"
+            },
+            "prometheus-net.AspNetCore": {
+              "target": "Package",
+              "version": "[8.0.0, )"
             }
           },
           "imports": [

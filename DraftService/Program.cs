@@ -2,6 +2,8 @@ using DraftService.Data;
 using DraftService.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 // ---- Serilog with console + Seq (central logging) ----
 var seqUrl = Environment.GetEnvironmentVariable("SEQ_URL") ?? "http://seq:5341";
@@ -24,6 +26,16 @@ try
         opt.UseSqlServer(conn, sql => sql.EnableRetryOnFailure()));
 
     builder.Services.AddControllers();
+
+    // OpenTelemetry Tracing
+    builder.Services.AddOpenTelemetry()
+        .ConfigureResource(r => r.AddService("DraftService"))
+        .WithTracing(t => t
+            .AddAspNetCoreInstrumentation()
+            .AddOtlpExporter(o =>
+            {
+                o.Endpoint = new Uri(Environment.GetEnvironmentVariable("OTLP_ENDPOINT") ?? "http://jaeger:4317");
+            }));
 
     var app = builder.Build();
 
