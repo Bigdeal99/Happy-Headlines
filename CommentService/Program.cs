@@ -53,8 +53,7 @@ var redisConn = Environment.GetEnvironmentVariable("REDIS_CONNECTION") ?? "redis
 builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConn));
 var commentCacheHits = Metrics.CreateCounter("comment_cache_hits_total", "Comment cache hits");
 var commentCacheMisses = Metrics.CreateCounter("comment_cache_misses_total", "Comment cache misses");
-builder.Services.AddSingleton(commentCacheHits);
-builder.Services.AddSingleton(commentCacheMisses);
+builder.Services.AddSingleton(new CommentMetricSet(commentCacheHits, commentCacheMisses));
 
 var app = builder.Build();
 

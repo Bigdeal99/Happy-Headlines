@@ -1,13 +1,12 @@
-version: "3.8"
-
 services:
   # ----------------------
   # Article Service + DBs
   # ----------------------
   article-service:
     image: article-service:latest
+    build: ./ArticleService
     deploy:
-      replicas: 3  # X-axis split
+      replicas: 1  # use 1 replica so Prometheus sees all hits on one instance
       restart_policy:
         condition: on-failure
     environment:
@@ -74,8 +73,9 @@ services:
   # ----------------------
   comment-service:
     image: comment-service:latest
+    build: ./CommentService
     deploy:
-      replicas: 2
+      replicas: 1  # use 1 replica so Prometheus sees all hits on one instance
       restart_policy:
         condition: on-failure
     environment:
@@ -101,6 +101,7 @@ services:
   # ----------------------
   profanity-service:
     image: profanity-service:latest
+    build: ./ProfanityService
     deploy:
       replicas: 1
       restart_policy:
@@ -123,6 +124,7 @@ services:
   # ----------------------
   draft-service:
     image: draft-service:latest
+    build: ./DraftService
     environment:
       - DB_CONNECTION=Server=draft-db;Database=Drafts;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True
       - SEQ_URL=http://seq:5341
@@ -149,7 +151,7 @@ services:
     environment:
       - ACCEPT_EULA=Y
     ports:
-      - "8085:80"     # Seq UI
+      - "8087:80"     # Seq UI (changed to avoid host conflict)
       - "5341:5341"   # ingestion API
   # ----------------------
   # Messaging + Tracing
@@ -170,11 +172,15 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
   rabbitmq:
     image: rabbitmq:3-management
     ports:
-      - "5672:5672"     # AMQP
-      - "15672:15672"   # RabbitMQ UI http://localhost:15672 (guest/guest)
+      - "5673:5672"     # AMQP (changed host port to avoid conflicts)
+      - "15673:15672"   # RabbitMQ UI http://localhost:15673 (guest/guest)
 
   jaeger:
     image: jaegertracing/all-in-one:1.57

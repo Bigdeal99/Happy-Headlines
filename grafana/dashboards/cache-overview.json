@@ -1,0 +1,55 @@
+{
+  "uid": "cache-overview",
+  "title": "Cache Overview",
+  "timezone": "",
+  "schemaVersion": 38,
+  "version": 1,
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "type": "gauge",
+      "title": "Article Cache Hit Ratio",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": false, "showThresholdMarkers": true },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } },
+      "targets": [
+        {
+          "expr": "sum(increase(article_cache_hits_total[5m])) / sum(increase(article_cache_hits_total[5m]) + increase(article_cache_misses_total[5m]))",
+          "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }
+        }
+      ]
+    },
+    {
+      "type": "gauge",
+      "title": "Comment Cache Hit Ratio",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": false, "showThresholdMarkers": true },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } },
+      "targets": [
+        {
+          "expr": "sum(increase(comment_cache_hits_total[5m])) / sum(increase(comment_cache_hits_total[5m]) + increase(comment_cache_misses_total[5m]))",
+          "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" }
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Article Cache Hits/Misses",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "sum(rate(article_cache_hits_total[5m]))", "legendFormat": "hits", "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" } },
+        { "expr": "sum(rate(article_cache_misses_total[5m]))", "legendFormat": "misses", "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" } }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Comment Cache Hits/Misses",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "sum(rate(comment_cache_hits_total[5m]))", "legendFormat": "hits", "refId": "A", "datasource": { "type": "prometheus", "uid": "prometheus" } },
+        { "expr": "sum(rate(comment_cache_misses_total[5m]))", "legendFormat": "misses", "refId": "B", "datasource": { "type": "prometheus", "uid": "prometheus" } }
+      ]
+    }
+  ]
+}
+

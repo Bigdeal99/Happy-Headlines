@@ -35,8 +35,7 @@ var redisConn = Environment.GetEnvironmentVariable("REDIS_CONNECTION") ?? "redis
 builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConn));
 var articleCacheHits = Metrics.CreateCounter("article_cache_hits_total", "Article cache hits");
 var articleCacheMisses = Metrics.CreateCounter("article_cache_misses_total", "Article cache misses");
-builder.Services.AddSingleton(articleCacheHits);
-builder.Services.AddSingleton(articleCacheMisses);
+builder.Services.AddSingleton(new ArticleMetricSet(articleCacheHits, articleCacheMisses));
 
 // -----------------
 // OpenTelemetry

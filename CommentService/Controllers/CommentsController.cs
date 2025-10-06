@@ -18,12 +18,12 @@ namespace CommentService.Controllers
         private readonly Counter _hits;
         private readonly Counter _misses;
 
-        public CommentsController(CommentDbContext db, IProfanityClient profanity, IConnectionMultiplexer redis, Counter commentCacheHits, Counter commentCacheMisses)
+        public CommentsController(CommentDbContext db, IProfanityClient profanity, IConnectionMultiplexer redis, CommentMetricSet metrics)
         {
             _db = db; _profanity = profanity;
             _cache = redis.GetDatabase();
-            _hits = commentCacheHits;
-            _misses = commentCacheMisses;
+            _hits = metrics.Hits;
+            _misses = metrics.Misses;
         }
 
         // POST /api/comments
@@ -53,6 +53,7 @@ namespace CommentService.Controllers
             var cached = await _cache.StringGetAsync(key);
             if (cached.HasValue)
             {
+                Response.Headers["X-Cache"] = "HIT";
                 _hits.Inc();
                 return Content(cached!, "application/json");
             }
@@ -65,22 +66,22 @@ namespace CommentService.Controllers
             _misses.Inc();
             var json = System.Text.Json.JsonSerializer.Serialize(list);
             await _cache.StringSetAsync(key, json, TimeSpan.FromMinutes(10));
-            // Move key to front in LRU list and enforce size 30
-            await _cache.ListRemoveAsync("comments:lru", key, 0);
-            await _cache.ListLeftPushAsync("comments:lru", key);
-            await _cache.ListTrimAsync("comments:lru", 0, 29);
+            Response.Headers["X-Cache"] = "MISS";
+            // Move key to front in LRU list
+            const string lruKey = "comments:lru";
+            await _cache.ListRemoveAsync(lruKey, key, 0);
+            await _cache.ListLeftPushAsync(lruKey, key);
 
-            // Evict any keys beyond the LRU window
-            var length = await _cache.ListLengthAsync("comments:lru");
-            if (length > 30)
+            // Determine keys that exceed the 30-article window BEFORE trimming, delete them, then trim list
+            var toEvict = await _cache.ListRangeAsync(lruKey, 30, -1);
+            if (toEvict is { Length: > 0 })
             {
-                var toEvict = await _cache.ListRangeAsync("comments:lru", 30, -1);
                 foreach (var evictKey in toEvict)
                 {
                     await _cache.KeyDeleteAsync(evictKey.ToString());
                 }
-                await _cache.ListTrimAsync("comments:lru", 0, 29);
             }
+            await _cache.ListTrimAsync(lruKey, 0, 29);
             return Content(json, "application/json");
         }
     }
