@@ -68,18 +68,22 @@ jobs:
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           REF="${{ github.ref }}"
           
-          # Initialize tags with SHA-based versions
-          TAGS="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service.name }}:${{ github.sha }},${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service.name }}:${SHORT_SHA}"
+          # Convert repository owner to lowercase (Docker requires lowercase)
+          OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_PREFIX_LOWER="${OWNER_LOWER}/happy-headlines"
+          
+          # Initialize tags with SHA-based versions (using lowercase prefix)
+          TAGS="${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}/${{ matrix.service.name }}:${{ github.sha }},${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}/${{ matrix.service.name }}:${SHORT_SHA}"
           
           # For main/master/finnishing-the-compulsory-assignment/DevOps-CI/CD branch, add latest tag
           if [ "$REF" = "refs/heads/main" ] || [ "$REF" = "refs/heads/master" ] || [ "$REF" = "refs/heads/finnishing-the-compulsory-assignment" ] || [ "$REF" = "refs/heads/DevOps-CI/CD" ]; then
-            TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service.name }}:latest"
+            TAGS="${TAGS},${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}/${{ matrix.service.name }}:latest"
           fi
           
           # For PRs, add PR number tag
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             PR_NUMBER="${{ github.event.pull_request.number }}"
-            TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service.name }}:pr-${PR_NUMBER}"
+            TAGS="${TAGS},${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}/${{ matrix.service.name }}:pr-${PR_NUMBER}"
           fi
           
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
@@ -113,6 +117,9 @@ jobs:
       - name: Build Summary
         run: |
           SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_PREFIX_LOWER="${OWNER_LOWER}/happy-headlines"
+          
           echo "## 🚀 Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "All services have been built and pushed to GitHub Container Registry:" >> $GITHUB_STEP_SUMMARY
@@ -126,17 +133,17 @@ jobs:
           echo "| Publisher Service | \`latest\`, \`${{ github.sha }}\`, \`${SHORT_SHA}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Newsletter Service | \`latest\`, \`${{ github.sha }}\`, \`${SHORT_SHA}\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Registry:** \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** \`${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📦 Pull Images" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/article-service:latest" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/comment-service:latest" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/profanity-service:latest" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/draft-service:latest" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/publisher-service:latest" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/newsletter-service:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}/article-service:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}/comment-service:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}/profanity-service:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}/draft-service:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}/publisher-service:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}/newsletter-service:latest" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
