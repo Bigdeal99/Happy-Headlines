@@ -13,13 +13,14 @@ See `docs/c4-l1.puml` for the updated C4 Level 1 diagram including tracing/loggi
 - **ProfanityService** - Profanity filtering service
 - **DraftService** - Draft article management with centralized logging
 - **PublisherService** - Article publishing with RabbitMQ messaging
-- **NewsletterService** - Newsletter generation service
+- **NewsletterService** - Newsletter generation service (with fault isolation)
+- **SubscriberService** - Subscriber management with feature flag and RabbitMQ queue
 
 ## CI/CD Pipeline
 
 This project includes automated CI/CD using GitHub Actions. Every push to `main`, `master`, or `finnishing-the-compulsory-assignment` branch automatically:
 
-- Builds Docker images for all 6 services
+- Builds Docker images for all 7 services
 - Tags images with version numbers (SHA, latest)
 - Pushes images to GitHub Container Registry (GHCR)
 
@@ -38,4 +39,5 @@ This project includes automated CI/CD using GitHub Actions. Every push to `main`
 
 - [CI/CD Setup](docs/CI-CD-Setup.md) - CI/CD pipeline documentation
 - [FMEA Risk Analysis](docs/FMEA-CICD-Risk-Analysis.md) - Risk analysis for CI/CD implementation
+- [SubscriberService Implementation](docs/SubscriberService-Implementation.md) - SubscriberService with feature flags and fault isolation
 - [C4 Architecture Diagram](docs/c4-l1.puml) - System architecture

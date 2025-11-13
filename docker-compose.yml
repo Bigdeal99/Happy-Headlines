@@ -208,10 +208,37 @@ services:
     build: ./NewsletterService
     environment:
       - ARTICLE_URL=http://article-service:8080
+      - SUBSCRIBER_URL=http://subscriber-service:8080
       - OTLP_ENDPOINT=http://jaeger:4317
     depends_on:
       - article-service
+      - subscriber-service
       - jaeger
       - redis
     ports:
       - "8086:8080"
+
+  # ----------------------
+  # Subscriber Service + DB
+  # ----------------------
+  subscriber-service:
+    image: subscriber-service:latest
+    build: ./SubscriberService
+    environment:
+      - DB_CONNECTION=Server=subscriber-db;Database=Subscribers;User=sa;Password=Your_password123;Encrypt=False;TrustServerCertificate=True
+      - REDIS_CONNECTION=redis:6379
+      - RABBIT_HOST=rabbitmq
+      - OTLP_ENDPOINT=http://jaeger:4317
+    ports:
+      - "8088:8080"
+    depends_on:
+      - subscriber-db
+      - redis
+      - rabbitmq
+      - jaeger
+
+  subscriber-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: "Your_password123"
+      ACCEPT_EULA: "Y"

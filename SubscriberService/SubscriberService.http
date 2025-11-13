@@ -1,0 +1,39 @@
+### SubscriberService API Tests
+
+### Subscribe
+POST http://localhost:8088/api/subscribers
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "name": "Test User"
+}
+
+### Unsubscribe
+DELETE http://localhost:8088/api/subscribers/test@example.com
+
+### Get All Subscribers (Active Only)
+GET http://localhost:8088/api/subscribers?activeOnly=true
+
+### Get All Subscribers (Including Inactive)
+GET http://localhost:8088/api/subscribers?activeOnly=false
+
+### Check Feature Flag Status
+GET http://localhost:8088/api/subscribers/feature-flag
+
+### Enable Feature Flag
+POST http://localhost:8088/api/subscribers/feature-flag
+Content-Type: application/json
+
+{
+  "enabled": true
+}
+
+### Disable Feature Flag
+POST http://localhost:8088/api/subscribers/feature-flag
+Content-Type: application/json
+
+{
+  "enabled": false
+}
+

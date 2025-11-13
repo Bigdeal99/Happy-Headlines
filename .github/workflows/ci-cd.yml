@@ -47,6 +47,9 @@ jobs:
           - name: newsletter-service
             path: ./NewsletterService
             dockerfile: ./NewsletterService/Dockerfile
+          - name: subscriber-service
+            path: ./SubscriberService
+            dockerfile: ./SubscriberService/Dockerfile
 
     steps:
       - name: Checkout code
@@ -132,6 +135,7 @@ jobs:
           echo "| Draft Service | \`latest\`, \`${{ github.sha }}\`, \`${SHORT_SHA}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Publisher Service | \`latest\`, \`${{ github.sha }}\`, \`${SHORT_SHA}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Newsletter Service | \`latest\`, \`${{ github.sha }}\`, \`${SHORT_SHA}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Subscriber Service | \`latest\`, \`${{ github.sha }}\`, \`${SHORT_SHA}\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Registry:** \`${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
@@ -145,5 +149,6 @@ jobs:
           echo "docker pull ${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}/draft-service:latest" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}/publisher-service:latest" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}/newsletter-service:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${IMAGE_PREFIX_LOWER}/subscriber-service:latest" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
