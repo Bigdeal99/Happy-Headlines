@@ -1,4 +1,242 @@
 # EKSAMEN - Spørgsmål 6: Recovery
+
+
+Yes — jeg gør den også **simpel**, men jeg **beholder antal slides (21)** og samme idé/indhold. Her er en “nem at sige højt” version.
+
+---
+
+## SLIDE 1: Titel
+
+**Speaking Notes (simpel):**
+
+* “I dag præsenterer jeg *Recovery* i et distribueret system.”
+* “Jeg viser: 1) feature flags i deployment, 2) rollback i CI/CD, 3) forskellen på *Design to be disabled* og *Design for rollback*.”
+* “Eksempel: Happy-Headlines + vores CI/CD og FMEA.”
+
+---
+
+# A: Feature flags i deployment
+
+## SLIDE 2: Feature Flags – Hvad og Hvorfor?
+
+**Speaking Notes:**
+
+* “Feature flags er en ON/OFF knap i koden.”
+* “Vi kan tænde/slukke en feature uden ny deploy.”
+* “Det er vigtigt for recovery, fordi vi kan reagere på sekunder.”
+
+---
+
+## SLIDE 3: Mulighed 1 – Gradual Rollout (Canary)
+
+**Speaking Notes:**
+
+* “Vi giver feature til få brugere først (fx 5%).”
+* “Vi kigger på fejl (error rate) og svartid (latency).”
+* “Hvis det går godt → flere brugere. Hvis ikke → sluk flag.”
+
+---
+
+## SLIDE 4: Mulighed 2 – Instant Rollback uden Redeploy
+
+**Speaking Notes:**
+
+* “Hvis feature giver fejl, slukker vi den.”
+* “Ingen ny build, ingen ny deployment.”
+* “Perfekt til ting som UI eller en ‘ekstra’ funktion.”
+
+---
+
+## SLIDE 5: Andre muligheder med Feature Flags
+
+**Speaking Notes:**
+
+* “A/B test: to versioner af samme feature.”
+* “Kun tændt i staging først.”
+* “Kill-switch: sluk hele feature hurtigt hvis noget går galt.”
+
+---
+
+## SLIDE 6: Feature Flags vs. Deployment
+
+**Speaking Notes:**
+
+* “Vigtig pointe: deployment ≠ release.”
+* “Koden kan være ude i production, men flag er OFF.”
+* “Så kan vi aktivere kontrolleret og sikkert.”
+
+---
+
+# B: Rollback i CI/CD pipeline
+
+## SLIDE 7: Overblik over Rollback-strategi
+
+**Speaking Notes:**
+
+* “Rollback-strategien har 4 dele:”
+
+1. “Version tags (SHA) så vi kan gå tilbage til præcis version.”
+2. “Health checks der stopper dårlige deploys.”
+3. “Monitoring/metrics kan også trigge rollback.”
+4. “DB backup før migration, hvis data også skal tilbage.”
+
+---
+
+## SLIDE 8: Version Tagging i CI/CD (Implementeret)
+
+**Speaking Notes:**
+
+* “I pipelinen tagger vi images med SHA.”
+* “Så ved vi altid hvad ‘sidste gode version’ er.”
+* “Det gør rollback hurtigt og sikkert.”
+  *(Screenshot: ci-cd.yml “Generate version tags”)*
+
+---
+
+## SLIDE 9: Health Check som Barrier (fra FMEA)
+
+**Speaking Notes:**
+
+* “FMEA siger: pipeline skal teste /health.”
+* “Den prøver mange gange.”
+* “Hvis service ikke bliver healthy → deployment fejler.”
+* “Det er første beskyttelse mod dårlig release.”
+
+---
+
+## SLIDE 10: Automatisk Rollback på Health-fejl
+
+**Speaking Notes:**
+
+* “Hvis health check fejler, kan vi rulle tilbage automatisk.”
+* “Idé: `kubectl rollout undo`.”
+* “Så går vi tilbage til forrige version, som virkede.”
+
+---
+
+## SLIDE 11: Monitoring-baseret Rollback (Prometheus)
+
+**Speaking Notes:**
+
+* “Health check fanger ‘helt nede’.”
+* “Monitoring fanger ‘den kører men er dårlig’.”
+* “Eksempel: hvis 5xx fejl > 5% → rollback.”
+* “Det giver bedre kvalitet og stabilitet.”
+
+---
+
+## SLIDE 12: Database-backup og Migration-Rollback
+
+**Speaking Notes:**
+
+* “Hvis vi ændrer database, er kode rollback ikke nok.”
+* “Derfor: backup før migration.”
+* “Hvis migration fejler → restore backup.”
+* “Så ruller vi både kode og data tilbage.”
+
+---
+
+## SLIDE 13: Samlet Rollback-flow
+
+**Speaking Notes:**
+
+* “Flowet er simpelt:”
+
+1. “Deploy ny version”
+2. “Health check”
+3. “Hvis OK → monitorér error rate”
+4. “Hvis noget går galt → rollback til forrige SHA”
+
+---
+
+# C: Design to be disabled vs Design for rollback
+
+## SLIDE 14: Sammenligning – Kort Tabel
+
+**Speaking Notes:**
+
+* “Design to be disabled = sluk en feature.”
+* “Design for rollback = rulle hele versionen tilbage.”
+* “De arbejder sammen.”
+
+---
+
+## SLIDE 15: Design to be disabled (Feature-niveau)
+
+**Speaking Notes:**
+
+* “Vi bygger features så de kan slås fra.”
+* “Resten af systemet fortsætter.”
+* “Bruges til: hurtig recovery og gradvis rollout.”
+
+---
+
+## SLIDE 16: Eksempelidé – Profanity-check Feature
+
+**Speaking Notes:**
+
+* “Profanity-check er en god kandidat.”
+* “Hvis profanity service er nede, kan vi slukke checket.”
+* “Så kan kommentarer stadig fungere.”
+* “Det er ‘graceful degradation’.”
+
+---
+
+## SLIDE 17: Design for rollback (System-niveau)
+
+**Speaking Notes:**
+
+* “Her ruller vi hele system-versionen tilbage.”
+* “Bruges ved: store fejl, DB-problemer, breaking changes.”
+* “Det er den tunge men sikre løsning.”
+
+---
+
+## SLIDE 18: Eksempel – Rollback i CI/CD
+
+**Speaking Notes:**
+
+* “Pipeline kan bruge `rollout undo`.”
+* “SHA-tags gør at vi ved præcis hvad vi går tilbage til.”
+* “Det er konkret ‘Design for rollback’.”
+
+---
+
+## SLIDE 19: Kombineret Best Practice
+
+**Speaking Notes:**
+
+* “Best practice: brug begge.”
+* “Deploy med flags OFF.”
+* “Tænd langsomt (canary).”
+* “Hvis noget går galt: sluk flag eller rollback.”
+
+---
+
+## SLIDE 20: Konklusion
+
+**Speaking Notes:**
+
+* “Feature flags = hurtig recovery på feature-niveau.”
+* “Rollback i CI/CD = recovery på system-niveau.”
+* “Design to be disabled handler om features.”
+* “Design for rollback handler om hele versionen.”
+* “Sammen giver de stabil drift.”
+
+---
+
+## SLIDE 21: Spørgsmål?
+
+**Speaking Notes:**
+
+* “Tak — jeg er klar til spørgsmål.”
+
+---
+
+
+-.--------------------------------------------------------------
+
+
 ## Slide Outline & Speaking Notes (ca. 15 min)
 
 ---

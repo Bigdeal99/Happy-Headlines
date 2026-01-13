@@ -1,3 +1,5 @@
+
+
 # EKSAMEN - Spørgsmål 7: Specifikationer
 ## Slide Outline & Speaking Notes
 

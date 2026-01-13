@@ -203,7 +203,7 @@ Developer Push → GitHub
 - 📊 **Konsistens**: Høj (samme process hver gang)
 
 ### Yderligere Automation (Fremtidige forbedringer):
-
+ 
 ```yaml
 # Eksempel på udvidet pipeline med flere automation steps
 

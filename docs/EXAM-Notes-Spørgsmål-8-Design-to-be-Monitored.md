@@ -1,3 +1,328 @@
+
+Klart — jeg gør den **meget mere simpel**, men jeg **beholder 28 slides** og **samme indhold/idé**. Jeg skriver “nemme” speaking notes, som du kan sige højt.
+
+---
+
+## SLIDE 1: Titel
+
+**Speaking Notes (simpel):**
+
+* “I dag præsenterer jeg *Design to be monitored*.”
+* “Jeg viser: 1) metrics, logging og tracing, 2) hvorfor microservices gør monitoring sværere, 3) hvordan logs/traces kan laves om til metrics.”
+* “Jeg bruger Happy-Headlines som eksempel.”
+
+---
+
+# PART A: PRINCIPPET
+
+## SLIDE 2: “Design to be monitored”-princippet
+
+**Speaking Notes:**
+
+* “Det betyder: vi tænker overvågning ind fra starten.”
+* “Det er ikke noget man tilføjer bagefter.”
+* “Monitoring er en vigtig del af arkitekturen.”
+
+---
+
+## SLIDE 3: Principper
+
+**Speaking Notes:**
+
+* “Vi måler de vigtigste ting i systemet (instrumentation).”
+* “Systemet skal kunne forstås udefra (observability).”
+* “Vi vil opdage fejl før brugerne gør (proactive).”
+* “I microservices skal vi kunne følge et request mellem services (distributed context).”
+
+---
+
+## SLIDE 4: Metrics – Definition
+
+**Speaking Notes:**
+
+* “Metrics er tal over tid.”
+* “De bruges til overblik og alarmer.”
+* “De fylder lidt og kan gemmes længe.”
+
+---
+
+## SLIDE 5: Metrics – Eksempel fra kodebasen
+
+**Speaking Notes:**
+
+* “I ArticleService laver vi metrics for cache hits og cache misses.”
+* “Det viser om cachen virker.”
+* “Eksempler: cache hit rate, request rate, error rate og p95 response time.”
+  *(Screenshot: Program.cs linje 36-37)*
+
+---
+
+## SLIDE 6: Metrics – Brug i Controller
+
+**Speaking Notes:**
+
+* “I controlleren tæller vi op når der er cache hit eller cache miss.”
+* “_hits.Inc() ved hit og _misses.Inc() ved miss.”
+* “Så kan vi se cache performance live.”
+  *(Screenshot: ArticlesController linje 33-38 og 47-49)*
+
+---
+
+## SLIDE 7: Logging – Definition
+
+**Speaking Notes:**
+
+* “Logs er beskeder om hvad der skete.”
+* “De er gode til debugging.”
+* “Der er mange logs, så man gemmer dem typisk kortere tid.”
+
+---
+
+## SLIDE 8: Logging – Eksempel fra kodebasen
+
+**Speaking Notes:**
+
+* “I DraftService bruger vi Serilog og sender logs til Seq.”
+* “Det er central logging: alle logs ét sted.”
+* “Eksempler: ‘service startet’, ‘cache miss’, ‘db fejl’.”
+  *(Screenshot: DraftService/Program.cs linje 9-14)*
+
+---
+
+## SLIDE 9: Logging – Correlation ID
+
+**Speaking Notes:**
+
+* “Correlation ID er et ID per request.”
+* “Det gør at vi kan finde samme request i logs på tværs af services.”
+* “Det er ekstra vigtigt i microservices.”
+  *(Screenshot: CorrelationIdMiddleware.cs)*
+
+---
+
+## SLIDE 10: Tracing – Definition
+
+**Speaking Notes:**
+
+* “Tracing følger én request gennem hele systemet.”
+* “Den viser hvor tiden bliver brugt.”
+* “Den består af spans (små dele) som hænger sammen.”
+
+---
+
+## SLIDE 11: Tracing – Eksempel fra kodebasen
+
+**Speaking Notes:**
+
+* “I ArticleQueueConsumer bruger vi OpenTelemetry.”
+* “Vi starter spans med ActivitySource.”
+* “Vi læser trace context fra RabbitMQ headers.”
+* “Så kan vi følge request: Publisher → RabbitMQ → ArticleService → Database.”
+  *(Screenshot: ArticleQueueConsumer linje 19 og 41-49)*
+
+---
+
+## SLIDE 12: Tracing – Context Propagation
+
+**Speaking Notes:**
+
+* “I PublisherService lægger vi trace info ind i RabbitMQ headers.”
+* “Så kan næste service fortsætte samme trace.”
+* “Det gør tracing muligt gennem queues.”
+  *(Screenshot: ArticleQueuePublisher linje 40 og 48-52)*
+
+---
+
+## SLIDE 13: Sammenligning – Tabel
+
+**Speaking Notes:**
+
+* “Metrics = tal (overblik/alarmer).”
+* “Logs = tekst events (debugging).”
+* “Traces = flow for ét request (find flaskehals).”
+* “Metrics: lav volumen, logs: høj, tracing: mellem.”
+
+---
+
+## SLIDE 14: Kombineret Approach
+
+**Speaking Notes:**
+
+* “Vi bruger alle tre sammen.”
+* “Metrics fortæller at der er et problem.”
+* “Logs forklarer hvad der skete.”
+* “Tracing viser hvor i flowet problemet er.”
+* “Så får vi fuld observability.”
+
+---
+
+# PART B: Y-AKSE PROBLEMER (MICROSERVICES)
+
+## SLIDE 15: Y-akse Skalering – Definition
+
+**Speaking Notes:**
+
+* “Y-akse betyder: split systemet i microservices.”
+* “I stedet for én monolit har vi fx 6 services.”
+* “Det gør monitoring mere svært fordi alt er spredt.”
+
+---
+
+## SLIDE 16: Problem 1 – Distributed Metrics Aggregation
+
+**Speaking Notes:**
+
+* “Før: én app → nemt at måle.”
+* “Efter: mange services → Prometheus skal scrape mange steder.”
+* “Man skal samle metrics fra flere services.”
+  *(Screenshot: prometheus.yml scrape_configs)*
+
+---
+
+## SLIDE 17: Problem 2 – Inconsistent Metric Names
+
+**Speaking Notes:**
+
+* “Hvis services bruger forskellige metric-navne, bliver queries svære.”
+* “Eksempel: article_cache_hits_total vs comment_cache_hits_total.”
+* “Løsning: standard navne eller labels.”
+
+---
+
+## SLIDE 18: Problem 3 – Distributed Tracing Complexity
+
+**Speaking Notes:**
+
+* “Tracing er nemt i monolit.”
+* “I microservices hopper request mellem services + RabbitMQ.”
+* “Derfor skal trace context sendes videre (propagation).”
+  *(Screenshot: injection i Publisher + extraction i ArticleService)*
+
+---
+
+## SLIDE 19: Problem 4 – Centralized Logging Aggregation
+
+**Speaking Notes:**
+
+* “Med microservices har du mange log streams.”
+* “Du skal samle dem ét sted (Seq).”
+* “Correlation ID er nødvendigt for at følge én request.”
+  *(Screenshot: Seq logging i DraftService/Program.cs)*
+
+---
+
+## SLIDE 20: Problem 5 – Service Discovery for Monitoring
+
+**Speaking Notes:**
+
+* “Når vi skalerer services (flere instanser), ændrer targets sig.”
+* “Monitoring skal kunne finde nye instanser automatisk.”
+* “Det kaldes service discovery (fx i Kubernetes).”
+
+---
+
+## SLIDE 21: Problem 6 – Cross-Service Metrics Correlation
+
+**Speaking Notes:**
+
+* “Total latency ligger ikke i én service.”
+* “Den er sum af flere services.”
+* “Tracing hjælper os med at se hvor tiden går.”
+* “Ellers gætter man.”
+
+---
+
+## SLIDE 22: Løsninger
+
+**Speaking Notes:**
+
+* “Vi løser det med 4 ting:”
+* “1) Standard metric navne/labels.”
+* “2) Distributed tracing med OpenTelemetry.”
+* “3) Central logging med Seq.”
+* “4) Service discovery til monitoring.”
+* “Det giver mere kompleksitet, men bedre kontrol.”
+
+---
+
+# PART C: LOGS/TRACES → METRICS
+
+## SLIDE 23: Data fra Logs → Metrics
+
+**Speaking Notes:**
+
+* “Vi kan tælle log-typer og lave metrics.”
+* “Error logs → error rate.”
+* “Request logs → request rate.”
+* “Cache logs → cache hit rate.”
+* “Slow query logs → database performance.”
+* “Fordel: vi kan lave alarmer og trends.”
+
+---
+
+## SLIDE 24: Data fra Traces → Metrics
+
+**Speaking Notes:**
+
+* “Fra traces kan vi lave performance metrics.”
+* “Span duration → response time (p95/p99).”
+* “Span count → throughput.”
+* “Error spans → error rate.”
+* “Cross-service latency → find bottlenecks.”
+
+---
+
+## SLIDE 25: Kombinerede Metrics
+
+**Speaking Notes:**
+
+* “Vi kan kombinere info og få bedre metrics.”
+* “Success rate kan komme fra logs eller traces.”
+* “Dependency graph kommer fra traces.”
+* “Cache performance har vi både som direkte metrics og via logs.”
+
+---
+
+## SLIDE 26: Anbefalede Metrics fra Logs/Traces
+
+**Speaking Notes:**
+
+* “De vigtigste metrics jeg vil måle er:”
+* “Error rate, request rate, p95/p99 response time.”
+* “Cache hit rate og slow queries.”
+* “Service dependency calls og cross-service latency.”
+
+---
+
+## SLIDE 27: Konklusion
+
+**Speaking Notes:**
+
+* “Design to be monitored gør microservices nemmere at drifte.”
+* “Logs og traces kan blive til metrics.”
+* “Best practice: brug direkte metrics når du kan.”
+* “Brug logs/traces til analyse og debugging.”
+* “Sammen giver de fuld observability.”
+
+---
+
+## SLIDE 28: Spørgsmål?
+
+**Speaking Notes:**
+
+* “Tak for jeres opmærksomhed.”
+* “Jeg er klar til spørgsmål.”
+
+---
+
+Hvis du vil gøre det endnu lettere:
+Jeg kan lave en **“1 sætning per slide”** version (super kort), som du bare kan memorere.
+
+
+------------------------------------------------------------------------------------------
+
+
+
 # EKSAMEN - Spørgsmål 8: Design to be monitored
 ## Slide Outline & Speaking Notes
 
