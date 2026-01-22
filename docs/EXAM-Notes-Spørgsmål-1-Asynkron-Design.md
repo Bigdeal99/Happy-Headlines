@@ -15,7 +15,7 @@
 
 ---
 
-## SLIDE 3: Problem 1 - Blocking I/O
+## SLIDE 2: Problem 1 - Blocking I/O
 **Speaking Notes:**
 - "Første problem: blocking I/O"
 - "Når en synkron operation venter på database eller HTTP call, bliver tråden blokeret"
@@ -26,7 +26,7 @@
 
 ---
 
-## SLIDE 4: Problem 2 - Tæt Kobling
+## SLIDE 3: Problem 2 - Tæt Kobling
 **Speaking Notes:**
 - "Andet problem: tæt kobling mellem services"
 - "Synkron kommunikation skaber tæt kobling"
@@ -36,7 +36,7 @@
 
 ---
 
-## SLIDE 5: Problem 3 - Long-Running Operations
+## SLIDE 4: Problem 3 - Long-Running Operations
 **Speaking Notes:**
 - "Tredje problem: long-running operations"
 - "Operationer som cache warming eller data processing tager lang tid"
@@ -46,7 +46,7 @@
 
 ---
 
-## SLIDE 6: Problem 4 - Resource Contention
+## SLIDE 5: Problem 4 - Resource Contention
 **Speaking Notes:**
 - "Fjerde problem: resource contention"
 - "Mange samtidige requests til samme resource, fx database"
@@ -60,7 +60,7 @@
 
 ---
 
-## SLIDE 7: Demo 1 - Message Queue Pattern
+## SLIDE 6: Demo 1 - Message Queue Pattern
 **Speaking Notes:**
 - "Nu viser jeg konkrete eksempler fra vores projekt"
 - "Første eksempel: Message Queue Pattern"
@@ -81,7 +81,7 @@
 
 ---
 
-## SLIDE 8: Demo 1 - Performance Metrics
+## SLIDE 7: Demo 1 - Performance Metrics
 **Speaking Notes:**
 - "Performance-forbedring:"
 - "Response time: fra 500ms til 50ms - 10x hurtigere"
@@ -91,7 +91,7 @@
 
 ---
 
-## SLIDE 9: Demo 2 - Async/Await i Controllers
+## SLIDE 8: Demo 2 - Async/Await i Controllers
 **Speaking Notes:**
 - "Andet eksempel: Async/Await i Controllers"
 - "I ArticlesController ser vi at alle I/O operationer er asynkrone"
@@ -109,7 +109,7 @@
 
 ---
 
-## SLIDE 10: Demo 2 - Thread Pool Efficiency
+## SLIDE 9: Demo 2 - Thread Pool Efficiency
 **Speaking Notes:**
 - "Thread pool efficiency:"
 - "Synkron: Hver request kræver sin egen tråd"
@@ -121,7 +121,7 @@
 
 ---
 
-## SLIDE 11: Demo 3 - Background Services
+## SLIDE 10: Demo 3 - Background Services
 **Speaking Notes:**
 - "Tredje eksempel: Background Services"
 - "ArticleCacheWarmer kører i baggrunden og varmer cache op"
@@ -138,7 +138,7 @@
 
 ---
 
-## SLIDE 12: Demo 3 - Cache Performance
+## SLIDE 11: Demo 3 - Cache Performance
 **Speaking Notes:**
 - "Cache performance:"
 - "Før cache warming: 30% cache hits, 50ms response time (database)"
@@ -149,7 +149,7 @@
 
 ---
 
-## SLIDE 13: Performance Summary
+## SLIDE 12: Performance Summary
 **Speaking Notes:**
 - "Performance summary:"
 - "Alle metrics forbedres betydeligt"
@@ -166,7 +166,7 @@
 
 ---
 
-## SLIDE 14: Kompromis 1 - Error Handling
+## SLIDE 13: Kompromis 1 - Error Handling
 **Speaking Notes:**
 - "Nu diskuterer jeg kompromiserne"
 - "Første kompromis: Error handling bliver mere kompleks"
@@ -183,7 +183,7 @@
 
 ---
 
-## SLIDE 15: Kompromis 2 - Debugging
+## SLIDE 14: Kompromis 2 - Debugging
 **Speaking Notes:**
 - "Andet kompromis: Debugging bliver mere kompleks"
 - "Stack traces i asynkron kode er mindre informative"
@@ -199,7 +199,7 @@
 
 ---
 
-## SLIDE 16: Kompromis 3 - State Management
+## SLIDE 15: Kompromis 3 - State Management
 **Speaking Notes:**
 - "Tredje kompromis: State management"
 - "Shared state kan skabe race conditions i asynkron kode"
@@ -210,7 +210,7 @@
 
 ---
 
-## SLIDE 17: Kompromis 4 - Message Queue Overhead
+## SLIDE 16: Kompromis 4 - Message Queue Overhead
 **Speaking Notes:**
 - "Fjerde kompromis: Message queue overhead"
 - "RabbitMQ introducerer latency - 1-5ms per message"
@@ -221,7 +221,7 @@
 
 ---
 
-## SLIDE 18: Kompromis 5 - Eventual Consistency
+## SLIDE 17: Kompromis 5 - Eventual Consistency
 **Speaking Notes:**
 - "Femte kompromis: Eventual consistency"
 - "Asynkron processing betyder at data ikke er konsistent med det samme"
@@ -232,7 +232,7 @@
 
 ---
 
-## SLIDE 19: Kompromis Summary
+## SLIDE 18: Kompromis Summary
 **Speaking Notes:**
 - "Kompromis summary:"
 - "Alle kompromiser handler om højere kompleksitet"

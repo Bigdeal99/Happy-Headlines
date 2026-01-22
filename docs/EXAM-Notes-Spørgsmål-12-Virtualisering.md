@@ -114,7 +114,6 @@
 ## SLIDE 11: Eksempel 1 - Dockerfile (Konsistent Build)
 **Speaking Notes:**
 - "Eksempel 1: Dockerfile (Konsistent Build)"
-- "Kodeeksempel: ArticleService/Dockerfile (linje 1-14) - Multi-stage build"
 - "Stage 1: Base image (runtime) - FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base"
 - "Stage 2: Build stage - FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build, RUN dotnet restore, RUN dotnet publish"
 - "Stage 3: Final image - FROM base AS final, COPY --from=build /out ."
